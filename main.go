@@ -35,29 +35,20 @@ func (ei *executorIns) ValidWorkCreateParams(params map[string]interface{}) (err
 func (ei *executorIns) ExecutorMainFunc(ctx context.Context, params map[string]interface{}) error {
 	errChan := make(chan error)
 	go func() {
-		work, err := toolModels.GetWorkByUUID(params["workUUID"].(string))
+		work := params["work"].(*toolModels.Work)
+		var validParams fingerprint.FingerprintParams
+		err := json.Unmarshal(work.Params, &validParams)
 		if err != nil {
-			logger.Error(toolSchemas.GetWorkErr, err)
+			logger.Error(toolSchemas.JsonParseErr, err)
 			errChan <- err
 		} else {
-			var validParams fingerprint.FingerprintParams
-			err = json.Unmarshal(work.Params, &validParams)
-			if err != nil {
-				logger.Error(toolSchemas.JsonParseErr, err)
-				errChan <- err
-			} else {
-				if len(validParams.Urls) < 1 {
-					errChan <- errors.New(toolSchemas.WorkTargetErr)
-				} else {
-					err = fingerprint.FingerprintMainWorker(ctx, &work, &validParams)
-					errChan <- err
-				}
-			}
+			err = fingerprint.FingerprintMainWorker(ctx, work, &validParams)
+			errChan <- err
 		}
 	}()
 	select {
 	case <-ctx.Done():
-		return errors.New(toolSchemas.CancelWorkErr)
+		return errors.New(toolSchemas.WorkCancelErr)
 	case err := <-errChan:
 		fmt.Println("------------>", "任务结束")
 		return err

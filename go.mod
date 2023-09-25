@@ -22,7 +22,7 @@ require (
 	github.com/projectdiscovery/utils v0.0.54
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/temoto/robotstxt v1.1.2
-	gitlab.example.com/zhangweijie/tool-sdk v0.4.2
+	gitlab.example.com/zhangweijie/tool-sdk v0.6.0
 	go.zoe.im/surferua v0.0.3
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.0.5
@@ -71,6 +71,7 @@ require (
 	github.com/redis/go-redis/v9 v9.1.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
+	github.com/streadway/amqp v1.1.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -90,8 +91,12 @@ require (
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
+	google.golang.org/grpc v1.58.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect
 	gorm.io/gorm v1.25.4 // indirect
 )
+
+replace gitlab.example.com/zhangweijie/tool-sdk v0.5.3 => /Users/zhangweijie/Desktop/workspace/tool-sdk

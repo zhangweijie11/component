@@ -1,4 +1,5 @@
 server:
+  server_name: component
   run_mode: debug  # debug or release
   run_port: 5000
   read_timeout: 60
