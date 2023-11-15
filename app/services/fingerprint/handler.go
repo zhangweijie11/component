@@ -55,8 +55,8 @@ type FingerprintParams struct {
 	UserAgent string   `json:"user_agent"`
 }
 
-// wappalyzerRun 运行 wappalyzer 插件
-func wappalyzerRun(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]wapp.WappFingerResult, error) {
+// WappalyzerRun 运行 wappalyzer 插件
+func WappalyzerRun(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]wapp.WappFingerResult, error) {
 	resCh := make(chan map[string]interface{})
 
 	go func() {
@@ -103,8 +103,8 @@ func wappalyzerRun(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]wapp
 	}
 }
 
-// formatWappalyzerResult 格式化 wappalyzer 插件的结果
-func formatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerResult *[]wapp.WappFingerResult) {
+// FormatWappalyzerResult 格式化 wappalyzer 插件的结果
+func FormatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerResult *[]wapp.WappFingerResult) {
 	// 处理全部目标 URL 的结果数据
 	for _, value := range *wappalyzerResult {
 		// 重新设置响应头
@@ -177,8 +177,8 @@ func formatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerR
 	}
 }
 
-// getWapplyzerWorker 获取可用插件
-func getWapplyzerWorker(scraper string, maxDepth int, userAgent string) (wapplyzer *wapp.Wappalyzer, err error) {
+// GetWapplyzerWorker 获取可用插件
+func GetWapplyzerWorker(scraper string, maxDepth int, userAgent string) (wapplyzer *wapp.Wappalyzer, err error) {
 	wappalyzer, err := wapp.NewWappalyzer(maxDepth, userAgent)
 	if err != nil {
 		logger.Error("初始化 Wappalyzer 插件出现错误", err)
@@ -205,7 +205,7 @@ func (w *Worker) GroupFingerprintWorker() {
 				var fingerResults []result.FingerResult
 
 				// 获取 wappalyzer 插件结果
-				wappalyzerResult, _ := wappalyzerRun(task.TargetUrl, task.CollyScraper, task.RodScraper)
+				wappalyzerResult, _ := WappalyzerRun(task.TargetUrl, task.CollyScraper, task.RodScraper)
 
 				for _, tmpResult := range *wappalyzerResult {
 					normalResult, _ := normal.NormalFingerScan(&tmpResult.ResponseData)
@@ -221,7 +221,7 @@ func (w *Worker) GroupFingerprintWorker() {
 					}
 				}
 
-				formatWappalyzerResult(&fingerResults, wappalyzerResult)
+				FormatWappalyzerResult(&fingerResults, wappalyzerResult)
 
 				for _, fingerResult := range fingerResults {
 					logger.Info(fmt.Sprintf("------------> URL %s -------> Title %s -------> Technologies %s", fingerResult.URL, fingerResult.Title, fingerResult.Technologies))
@@ -254,9 +254,9 @@ func FingerprintMainWorker(ctx context.Context, work *toolModels.Work, validPara
 		var collyWorker *wapp.Wappalyzer
 		var rodWorker *wapp.Wappalyzer
 		if validParams.Scraper == "colly" {
-			collyWorker, _ = getWapplyzerWorker("colly", validParams.MaxDepth, validParams.UserAgent)
+			collyWorker, _ = GetWapplyzerWorker("colly", validParams.MaxDepth, validParams.UserAgent)
 		} else {
-			rodWorker, _ = getWapplyzerWorker("rod", validParams.MaxDepth, validParams.UserAgent)
+			rodWorker, _ = GetWapplyzerWorker("rod", validParams.MaxDepth, validParams.UserAgent)
 		}
 
 		go func() {
@@ -293,7 +293,6 @@ func FingerprintMainWorker(ctx context.Context, work *toolModels.Work, validPara
 				global.ValidProgressChan <- pushProgress
 			}
 			if len(fingerprintResult) > 0 {
-				fmt.Println("------------>", fingerprintResult[0].Technologies)
 				finalResult = append(finalResult, fingerprintResult)
 			}
 		}

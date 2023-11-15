@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-rod/rod v0.114.3
+	github.com/go-rod/rod v0.114.5
 	github.com/go-rod/stealth v0.4.9
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/hashicorp/go-version v1.6.0
@@ -22,7 +22,7 @@ require (
 	github.com/projectdiscovery/utils v0.0.54
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/temoto/robotstxt v1.1.2
-	gitlab.example.com/zhangweijie/tool-sdk v0.6.0
+	gitlab.example.com/zhangweijie/tool-sdk v0.7.0
 	go.zoe.im/surferua v0.0.3
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.0.5
@@ -98,5 +98,3 @@ require (
 	gorm.io/driver/mysql v1.5.1 // indirect
 	gorm.io/gorm v1.25.4 // indirect
 )
-
-replace gitlab.example.com/zhangweijie/tool-sdk v0.5.3 => /Users/zhangweijie/Desktop/workspace/tool-sdk

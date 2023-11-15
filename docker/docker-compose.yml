@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  component-app:
+    image: component-app
+    container_name: component-app
+    build:
+      dockerfile: dockerfile
+    restart: always
+    volumes:
+      - './:/usr/src/app'
+    ports:
+      - "5003:5003"
