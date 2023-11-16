@@ -7,5 +7,6 @@ var taskValidatorErrorMessage = map[string]string{
 
 // RegisterValidatorRule 注册参数验证错误消息, Key = e.StructNamespace(), value.key = e.Field()+e.Tag()
 var RegisterValidatorRule = map[string]map[string]string{
-	"FingerprintParams": taskValidatorErrorMessage,
+	"FingerprintTaskCreateSchema": taskValidatorErrorMessage,
+	"CertificateTaskCreateSchema": taskValidatorErrorMessage,
 }

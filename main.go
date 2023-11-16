@@ -23,9 +23,9 @@ type executorIns struct {
 }
 
 func (ei *executorIns) ValidWorkCreateParams(params map[string]interface{}) (err error) {
-	var schema = new(schemas.FingerprintParams)
+	var schema = new(schemas.FingerprintTaskCreateSchema)
 	if err = toolSchemas.CustomBindSchema(params, schema, schemas.RegisterValidatorRule); err == nil || err.Error() == "" {
-		err = toolSchemas.ValidateLength(schema.Urls, 0, 100)
+		err = toolSchemas.ValidateLength(schema.URL, 0, 100)
 	}
 
 	return err
@@ -35,7 +35,7 @@ func (ei *executorIns) ExecutorMainFunc(ctx context.Context, params map[string]i
 	errChan := make(chan error)
 	go func() {
 		work := params["work"].(*toolModels.Work)
-		var validParams fingerprint.FingerprintParams
+		var validParams schemas.FingerprintTaskCreateSchema
 		err := json.Unmarshal(work.Params, &validParams)
 		if err != nil {
 			logger.Error(toolSchemas.JsonParseErr, err)

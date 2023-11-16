@@ -1,12 +1,15 @@
 package certificate
 
 import (
+	"context"
 	"crypto/md5"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
+	"gitlab.example.com/zhangweijie/component/middlerware/schemas"
+	toolModels "gitlab.example.com/zhangweijie/tool-sdk/models"
 	"net/http"
 	"strconv"
 	"strings"
@@ -73,7 +76,7 @@ func splitByN(s string, n int) []string {
 	return parts
 }
 
-func GetCertInfoOfUrl(url string) *Certificate {
+func GetCertInfoOfUrl(ctx context.Context, work *toolModels.Work, validParams *schemas.CertificateTaskCreateSchema) (*Certificate, error) {
 	certificate := &Certificate{}
 	// 创建一个 HTTP 客户端
 	client := &http.Client{
@@ -85,9 +88,9 @@ func GetCertInfoOfUrl(url string) *Certificate {
 	}
 
 	// 发起 GET 请求
-	resp, err := client.Get(url)
+	resp, err := client.Get(validParams.Url)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -142,7 +145,7 @@ func GetCertInfoOfUrl(url string) *Certificate {
 		certificate.DNSNames = cert.DNSNames
 	}
 
-	return certificate
+	return certificate, err
 }
 
 func GetCertInfoOfResponse(response *http.Response) *Certificate {
