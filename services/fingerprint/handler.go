@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"gitlab.example.com/zhangweijie/component/services/fingerprint/normal"
-	"gitlab.example.com/zhangweijie/component/services/fingerprint/result"
+	fingResult "gitlab.example.com/zhangweijie/component/services/fingerprint/result"
 	wapp "gitlab.example.com/zhangweijie/component/services/fingerprint/wappalyzer"
+	serviceFinger "gitlab.example.com/zhangweijie/portscan/services/service_recognize/fingerprint"
+	serviceResult "gitlab.example.com/zhangweijie/portscan/services/service_recognize/result"
 	"gitlab.example.com/zhangweijie/tool-sdk/global"
 	"gitlab.example.com/zhangweijie/tool-sdk/global/utils"
 	"gitlab.example.com/zhangweijie/tool-sdk/middleware/logger"
@@ -22,8 +24,8 @@ type Worker struct {
 	ID         int // 任务执行者 ID
 	Ctx        context.Context
 	Wg         *sync.WaitGroup
-	TaskChan   chan Task                  // 子任务通道
-	ResultChan chan []result.FingerResult // 子任务结果通道
+	TaskChan   chan Task                      // 子任务通道
+	ResultChan chan []fingResult.FingerResult // 子任务结果通道
 }
 
 type Task struct {
@@ -38,7 +40,7 @@ type Task struct {
 }
 
 // NewWorker 初始化 worker
-func NewWorker(ctx context.Context, wg *sync.WaitGroup, id int, taskChan chan Task, resultChan chan []result.FingerResult) *Worker {
+func NewWorker(ctx context.Context, wg *sync.WaitGroup, id int, taskChan chan Task, resultChan chan []fingResult.FingerResult) *Worker {
 	return &Worker{
 		ID:         id,
 		Ctx:        ctx,
@@ -55,8 +57,8 @@ type FingerprintParams struct {
 	UserAgent string   `json:"user_agent"`
 }
 
-// WappalyzerRun 运行 wappalyzer 插件
-func WappalyzerRun(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]wapp.WappFingerResult, error) {
+// wappalyzerRun 运行 wappalyzer 插件
+func wappalyzerRun(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]wapp.WappFingerResult, error) {
 	resCh := make(chan map[string]interface{})
 
 	go func() {
@@ -103,8 +105,8 @@ func WappalyzerRun(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]wapp
 	}
 }
 
-// FormatWappalyzerResult 格式化 wappalyzer 插件的结果
-func FormatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerResult *[]wapp.WappFingerResult) {
+// formatWappalyzerResult 格式化 wappalyzer 插件的结果
+func formatWappalyzerResult(allFingerResults *[]fingResult.FingerResult, wappalyzerResult *[]wapp.WappFingerResult) {
 	// 处理全部目标 URL 的结果数据
 	for _, value := range *wappalyzerResult {
 		// 重新设置响应头
@@ -118,7 +120,7 @@ func FormatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerR
 			certInfo = []byte{}
 		}
 
-		fingerResult := result.FingerResult{
+		fingerResult := fingResult.FingerResult{
 			URL:         value.ResponseData.URL,
 			StatusCode:  value.ResponseData.StatusCode,
 			Title:       value.ResponseData.Title,
@@ -143,7 +145,7 @@ func FormatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerR
 				}
 				if !found {
 					categories = append(categories, wapp.CategoryMap[category.Name])
-					simpleTechnology := result.SimpleTechnology{
+					simpleTechnology := fingResult.SimpleTechnology{
 						Name:    technology.Name,
 						Version: technology.Version,
 					}
@@ -165,7 +167,7 @@ func FormatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerR
 				}
 			}
 
-			fingerResult.Technologies = append(fingerResult.Technologies, result.Technology{
+			fingerResult.Technologies = append(fingerResult.Technologies, fingResult.Technology{
 				Name:       technology.Name,
 				Version:    technology.Version,
 				Categories: categories,
@@ -177,8 +179,8 @@ func FormatWappalyzerResult(allFingerResults *[]result.FingerResult, wappalyzerR
 	}
 }
 
-// GetWapplyzerWorker 获取可用插件
-func GetWapplyzerWorker(scraper string, maxDepth int, userAgent string) (wapplyzer *wapp.Wappalyzer, err error) {
+// getWapplyzerWorker 获取可用插件
+func getWapplyzerWorker(scraper string, maxDepth int, userAgent string) (wapplyzer *wapp.Wappalyzer, err error) {
 	wappalyzer, err := wapp.NewWappalyzer(maxDepth, userAgent)
 	if err != nil {
 		logger.Error("初始化 Wappalyzer 插件出现错误", err)
@@ -202,10 +204,10 @@ func (w *Worker) GroupFingerprintWorker() {
 			case <-w.Ctx.Done():
 				return
 			default:
-				var fingerResults []result.FingerResult
+				var fingerResults []fingResult.FingerResult
 
 				// 获取 wappalyzer 插件结果
-				wappalyzerResult, _ := WappalyzerRun(task.TargetUrl, task.CollyScraper, task.RodScraper)
+				wappalyzerResult, _ := wappalyzerRun(task.TargetUrl, task.CollyScraper, task.RodScraper)
 
 				for _, tmpResult := range *wappalyzerResult {
 					normalResult, _ := normal.NormalFingerScan(&tmpResult.ResponseData)
@@ -221,7 +223,7 @@ func (w *Worker) GroupFingerprintWorker() {
 					}
 				}
 
-				FormatWappalyzerResult(&fingerResults, wappalyzerResult)
+				formatWappalyzerResult(&fingerResults, wappalyzerResult)
 
 				for _, fingerResult := range fingerResults {
 					logger.Info(fmt.Sprintf("------------> URL %s -------> Title %s -------> Technologies %s", fingerResult.URL, fingerResult.Title, fingerResult.Technologies))
@@ -243,7 +245,7 @@ func FingerprintMainWorker(ctx context.Context, work *toolModels.Work, validPara
 		defer close(quit)
 		onePercent := float64(100 / len(validParams.Urls))
 		taskChan := make(chan Task, len(validParams.Urls))
-		resultChan := make(chan []result.FingerResult, len(validParams.Urls))
+		resultChan := make(chan []fingResult.FingerResult, len(validParams.Urls))
 		var wg sync.WaitGroup
 		// 创建并启动多个工作者
 		for i := 0; i < global.Config.Server.Worker; i++ {
@@ -254,9 +256,9 @@ func FingerprintMainWorker(ctx context.Context, work *toolModels.Work, validPara
 		var collyWorker *wapp.Wappalyzer
 		var rodWorker *wapp.Wappalyzer
 		if validParams.Scraper == "colly" {
-			collyWorker, _ = GetWapplyzerWorker("colly", validParams.MaxDepth, validParams.UserAgent)
+			collyWorker, _ = getWapplyzerWorker("colly", validParams.MaxDepth, validParams.UserAgent)
 		} else {
-			rodWorker, _ = GetWapplyzerWorker("rod", validParams.MaxDepth, validParams.UserAgent)
+			rodWorker, _ = getWapplyzerWorker("rod", validParams.MaxDepth, validParams.UserAgent)
 		}
 
 		go func() {
@@ -283,7 +285,7 @@ func FingerprintMainWorker(ctx context.Context, work *toolModels.Work, validPara
 
 		}()
 
-		var finalResult [][]result.FingerResult
+		var finalResult [][]fingResult.FingerResult
 
 		for fingerprintResult := range resultChan {
 			if work.ProgressType != "" && work.ProgressUrl != "" {
@@ -319,5 +321,97 @@ func FingerprintMainWorker(ctx context.Context, work *toolModels.Work, validPara
 	case <-quit:
 		return nil
 	}
+}
 
+// portScanFingerprintWorker 端口扫描过程中使用的指纹识别
+func portScanFingerprintWorker(url string, collyWorker, rodWorker *wapp.Wappalyzer) (*[]fingResult.FingerResult, error) {
+	var fingerResults []fingResult.FingerResult
+	wappalyzerResult, err := wappalyzerRun(url, collyWorker, rodWorker)
+	if err != nil {
+		return nil, err
+	}
+	for _, tmpResult := range *wappalyzerResult {
+		normalResult, _ := normal.NormalFingerScan(&tmpResult.ResponseData)
+		// 结果去重
+		var tmpTechnologies []string
+		for _, technology := range tmpResult.Technologies {
+			tmpTechnologies = append(tmpTechnologies, strings.ToLower(technology.Name))
+		}
+		for _, vResult := range normalResult {
+			if !utils.JudgeDuplication(strings.ToLower(vResult.Name), tmpTechnologies) {
+				tmpResult.Technologies = append(tmpResult.Technologies, wapp.Technology{Name: vResult.Name, Categories: vResult.Categories})
+			}
+		}
+	}
+
+	formatWappalyzerResult(&fingerResults, wappalyzerResult)
+
+	for _, fingerResult := range fingerResults {
+		logger.Info(fmt.Sprintf("------------> URL %s -------> Title %s -------> Technologies %s", fingerResult.URL, fingerResult.Title, fingerResult.Technologies))
+	}
+
+	return &fingerResults, nil
+}
+
+// 合并服务识别和指纹识别结果中的产品组件
+func mergeTechnology(fingerprintTechnologies []fingResult.Technology, serviceTechnologies []serviceFinger.Technology) []fingResult.Technology {
+	tmpData1 := make(map[string]struct{})
+	tmpData2 := make(map[string]fingResult.Technology)
+	for _, technology := range fingerprintTechnologies {
+		if _, ok := tmpData1[strings.ToLower(technology.Name)]; !ok {
+			tmpData1[strings.ToLower(technology.Name)] = struct{}{}
+			tmpData2[technology.Name] = technology
+		}
+	}
+	for _, technology := range serviceTechnologies {
+		if _, ok := tmpData1[strings.ToLower(technology.Name)]; !ok {
+			tmpData1[strings.ToLower(technology.Name)] = struct{}{}
+			newTechnology := fingResult.Technology{
+				Name:       technology.Name,
+				Version:    technology.Version,
+				Categories: technology.Categories,
+			}
+			tmpData2[technology.Name] = newTechnology
+		}
+	}
+	var mergeResult []fingResult.Technology
+	for _, technology := range tmpData2 {
+		mergeResult = append(mergeResult, technology)
+	}
+
+	return mergeResult
+}
+
+func GetPortScanFingerprint(serviceRecognizeScanResults map[string]map[int]*serviceResult.Response) map[string]map[int]*fingResult.FingerResult {
+	targetUrls := make(map[string]*serviceResult.Response)
+	// 提取有效的 URL 数据
+	for _, serviceRecognizeScanResult := range serviceRecognizeScanResults {
+		for _, response := range serviceRecognizeScanResult {
+			if response.Protocol == "http" || response.Protocol == "https" {
+				url := fmt.Sprintf("%s://%s:%d", response.Protocol, response.IP, response.Port)
+				targetUrls[url] = response
+			}
+		}
+	}
+
+	finalResult := make(map[string]map[int]*fingResult.FingerResult)
+
+	if len(targetUrls) > 0 {
+		collyWorker, _ := getWapplyzerWorker("colly", 0, "")
+		rodWorker, _ := getWapplyzerWorker("rod", 0, "")
+		defer collyWorker.Scraper.Close()
+		defer rodWorker.Scraper.Close()
+		for targetUrl, sResult := range targetUrls {
+			tmpResult, err := portScanFingerprintWorker(targetUrl, collyWorker, rodWorker)
+			if err == nil && len(*tmpResult) > 0 {
+				mergeTechnologyResult := mergeTechnology((*tmpResult)[0].Technologies, sResult.Fingerprint.Technologies)
+				(*tmpResult)[0].Technologies = mergeTechnologyResult
+				finalResult[sResult.IP] = map[int]*fingResult.FingerResult{
+					sResult.Port: &(*tmpResult)[0],
+				}
+			}
+		}
+	}
+
+	return finalResult
 }

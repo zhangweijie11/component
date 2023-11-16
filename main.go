@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"gitlab.example.com/zhangweijie/component/middlerware/schemas"
 	"gitlab.example.com/zhangweijie/component/models"
@@ -50,7 +49,6 @@ func (ei *executorIns) ExecutorMainFunc(ctx context.Context, params map[string]i
 	case <-ctx.Done():
 		return errors.New(toolSchemas.WorkCancelErr)
 	case err := <-errChan:
-		fmt.Println("------------>", "任务结束")
 		return err
 	}
 }
