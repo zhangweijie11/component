@@ -91,18 +91,26 @@ func (s *CollyScraper) Scrape(paramURL string) (*ScrapedData, interface{}, error
 
 	s.Collector.OnResponse(func(r *colly.Response) {
 		// 获取响应状态码
-		scraped.URL = r.Request.URL.String()
-		scraped.StatusCode = r.StatusCode
+		if r.Request != nil {
+			scraped.URL = r.Request.URL.String()
+		}
+		if r.StatusCode != 0 {
+			scraped.StatusCode = r.StatusCode
+		}
 
 		// 获取响应头数据
 		scraped.Headers = make(map[string][]string)
-		for key, value := range *r.Headers {
-			lowerCaseKey := strings.ToLower(key)
-			scraped.Headers[lowerCaseKey] = value
+		if r.Headers != nil {
+			for key, value := range *r.Headers {
+				lowerCaseKey := strings.ToLower(key)
+				scraped.Headers[lowerCaseKey] = value
+			}
 		}
 
-		// 获取源码
-		scraped.HTML = string(r.Body)
+		if r.Body != nil {
+			// 获取源码
+			scraped.HTML = string(r.Body)
+		}
 
 		// 获取 cookies
 		scraped.Cookies = make(map[string]string)
@@ -130,18 +138,25 @@ func (s *CollyScraper) Scrape(paramURL string) (*ScrapedData, interface{}, error
 	})
 	s.Collector.OnError(func(r *colly.Response, err error) {
 		// 获取响应状态码
-		scraped.URL = r.Request.URL.String()
-		scraped.StatusCode = r.StatusCode
+		if r.Request != nil {
+			scraped.URL = r.Request.URL.String()
+		}
+		if r.StatusCode != 0 {
+			scraped.StatusCode = r.StatusCode
+		}
 
 		// 获取响应头数据
 		scraped.Headers = make(map[string][]string)
-		for key, value := range *r.Headers {
-			lowerCaseKey := strings.ToLower(key)
-			scraped.Headers[lowerCaseKey] = value
+		if r.Headers != nil {
+			for key, value := range *r.Headers {
+				lowerCaseKey := strings.ToLower(key)
+				scraped.Headers[lowerCaseKey] = value
+			}
 		}
-
-		// 获取源码
-		scraped.HTML = string(r.Body)
+		if r.Body != nil {
+			// 获取源码
+			scraped.HTML = string(r.Body)
+		}
 
 		// 获取 cookies
 		scraped.Cookies = make(map[string]string)
