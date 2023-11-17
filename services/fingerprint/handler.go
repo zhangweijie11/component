@@ -376,14 +376,14 @@ func mergeTechnology(fingerprintTechnologies []result.Technology, serviceTechnol
 	return mergeResult
 }
 
-func GetPortScanFingerprint(serviceRecognizeScanResults map[string]map[int]*portServiceResult.Response) map[string]map[int]*result.FingerResult {
-	targetUrls := make(map[string]*portServiceResult.Response)
+func GetPortScanFingerprint(serviceRecognizeResult map[string]map[int]*portServiceResult.RecognizeResponse) map[string]map[int]*result.FingerResult {
+	targetUrls := make(map[string]*portServiceResult.RecognizeResponse)
 	// 提取有效的 URL 数据
-	for _, serviceRecognizeScanResult := range serviceRecognizeScanResults {
-		for _, response := range serviceRecognizeScanResult {
-			if response.Protocol == "http" || response.Protocol == "https" {
-				url := fmt.Sprintf("%s://%s:%d", response.Protocol, response.IP, response.Port)
-				targetUrls[url] = response
+	for _, recognizeResult := range serviceRecognizeResult {
+		for _, recognizeResponse := range recognizeResult {
+			if recognizeResponse.Protocol == "http" || recognizeResponse.Protocol == "https" {
+				url := fmt.Sprintf("%s://%s:%d", recognizeResponse.Protocol, recognizeResponse.IP, recognizeResponse.Port)
+				targetUrls[url] = recognizeResponse
 			}
 		}
 	}
@@ -395,13 +395,13 @@ func GetPortScanFingerprint(serviceRecognizeScanResults map[string]map[int]*port
 		rodWorker, _ := getWapplyzerWorker("rod", 0, "")
 		defer collyWorker.Scraper.Close()
 		defer rodWorker.Scraper.Close()
-		for targetUrl, sResult := range targetUrls {
+		for targetUrl, serviceResult := range targetUrls {
 			tmpResult, err := portScanFingerprintWorker(targetUrl, collyWorker, rodWorker)
 			if err == nil && len(*tmpResult) > 0 {
-				mergeTechnologyResult := mergeTechnology((*tmpResult)[0].Technologies, sResult.Fingerprint.Technologies)
+				mergeTechnologyResult := mergeTechnology((*tmpResult)[0].Technologies, serviceResult.Fingerprint.Technologies)
 				(*tmpResult)[0].Technologies = mergeTechnologyResult
-				finalResult[sResult.IP] = map[int]*result.FingerResult{
-					sResult.Port: &(*tmpResult)[0],
+				finalResult[serviceResult.IP] = map[int]*result.FingerResult{
+					serviceResult.Port: &(*tmpResult)[0],
 				}
 			}
 		}

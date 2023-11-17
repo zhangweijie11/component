@@ -22,7 +22,7 @@ require (
 	github.com/projectdiscovery/utils v0.0.62
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/temoto/robotstxt v1.1.2
-	gitlab.example.com/zhangweijie/portscan v0.4.0
+	gitlab.example.com/zhangweijie/portscan v0.4.1
 	gitlab.example.com/zhangweijie/tool-sdk v0.7.1
 	go.zoe.im/surferua v0.0.3
 	gopkg.in/yaml.v3 v3.0.1
@@ -97,6 +97,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	google.golang.org/grpc v1.58.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect
 	gorm.io/gorm v1.25.4 // indirect
