@@ -56,6 +56,7 @@ func wappalyzerRun(url string, collyWorker, rodWorker *gowap.Wappalyzer) (*[]gow
 	resCh := make(chan map[string]interface{})
 
 	go func() {
+		defer close(resCh)
 		if collyWorker != nil {
 			wappalyzerResult, err := collyWorker.Analyze(url)
 			if (err != nil || len(wappalyzerResult) == 0) && rodWorker != nil {
@@ -374,6 +375,12 @@ func mergeTechnology(fingerprintTechnologies []result.Technology, serviceTechnol
 
 func GetPortScanFingerprint(serviceRecognizeResult map[string]map[int]*portServiceResult.RecognizeResponse) map[string]map[int]*result.FingerResult {
 	targetUrls := make(map[string]*portServiceResult.RecognizeResponse)
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Warn(fmt.Sprintf("信息侦测流程指纹识别时捕获到错误: %s", err))
+			return
+		}
+	}()
 	// 提取有效的 URL 数据
 	for _, recognizeResult := range serviceRecognizeResult {
 		for _, recognizeResponse := range recognizeResult {
@@ -389,8 +396,14 @@ func GetPortScanFingerprint(serviceRecognizeResult map[string]map[int]*portServi
 	if len(targetUrls) > 0 {
 		collyWorker, _ := getWapplyzerWorker("colly", 0, "")
 		rodWorker, _ := getWapplyzerWorker("rod", 0, "")
-		defer collyWorker.Scraper.Close()
-		defer rodWorker.Scraper.Close()
+		defer func() {
+			if collyWorker != nil {
+				collyWorker.Scraper.Close()
+			}
+			if rodWorker != nil {
+				rodWorker.Scraper.Close()
+			}
+		}()
 		for targetUrl, serviceResult := range targetUrls {
 			tmpResult, err := portScanFingerprintWorker(targetUrl, collyWorker, rodWorker)
 			if err == nil && len(*tmpResult) > 0 {
