@@ -145,7 +145,6 @@ func getFaviconHash(host string) (string, string) {
 	}
 	resp, err := client.Get(host)
 	if err != nil {
-		logger.Warn("请求图标发生错误")
 		return "", ""
 	}
 	defer resp.Body.Close()

@@ -114,8 +114,6 @@ func LoadAllTemplate() ([]*templates.Template, error) {
 	return ValidTemplates, nil
 }
 
-var wg sync.WaitGroup
-
 type resultApp struct {
 	technology gowap.Technology // 产品
 	excludes   interface{}      // 需要排除的产品
@@ -165,6 +163,7 @@ func NormalFingerScan(sourceResponseData *scraper.ScrapedData) ([]gowap.Technolo
 	data["favicon"] = sourceResponseData.Favicon
 	allTemplates, _ := LoadAllTemplate()
 	detectedApplications := &detected{Mu: new(sync.Mutex), Apps: make(map[string]*resultApp)}
+	var wg sync.WaitGroup
 	for _, template := range allTemplates {
 		wg.Add(1)
 		go func(template *templates.Template) {

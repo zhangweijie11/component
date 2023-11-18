@@ -96,7 +96,6 @@ type pattern struct {
 var f embed.FS
 var embedPath = "assets/technologies.json"
 
-var wg sync.WaitGroup
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func NewWappalyzerScraper(wappalyzer *Wappalyzer, validScraper string) (err error) {
@@ -663,6 +662,8 @@ func analyzePage(paramURL string, wapp *Wappalyzer, detectedApplications *detect
 		(*links)[strings.TrimRight(scraped.URL, "/")] = struct{}{}
 		scraped.URL = paramURL
 	}
+
+	var wg sync.WaitGroup
 
 	//循环匹配全部 APPS
 	for _, app := range wapp.Apps {

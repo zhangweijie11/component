@@ -340,10 +340,6 @@ func portScanFingerprintWorker(url string, collyWorker, rodWorker *gowap.Wappaly
 
 	formatWappalyzerResult(&fingerResults, wappalyzerResult)
 
-	for _, fingerResult := range fingerResults {
-		logger.Info(fmt.Sprintf("------------> URL %s -------> Title %s -------> Technologies %s", fingerResult.URL, fingerResult.Title, fingerResult.Technologies))
-	}
-
 	return &fingerResults, nil
 }
 
